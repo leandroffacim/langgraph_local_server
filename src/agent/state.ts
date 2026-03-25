@@ -7,7 +7,7 @@ export interface Task {
     title: string;
     description: string;
     dependsOn: string[]; // ids das tasks que precisam ser concluídas antes
-    status: "pending" | "in_progress" | "done";
+    status: "pending" | "in_progress" | "done" | "failed";
 }
 
 export const StateAnnotation = Annotation.Root({

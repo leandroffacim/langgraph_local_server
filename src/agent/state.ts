@@ -1,7 +1,6 @@
 // state.ts
 import { BaseMessage, BaseMessageLike } from "@langchain/core/messages";
 import { Annotation, messagesStateReducer } from "@langchain/langgraph";
-import { PerformanceMonitor } from "./performance-monitor.js";
 
 export interface Task {
     id: string;
@@ -34,11 +33,5 @@ export const StateAnnotation = Annotation.Root({
     filesWritten: Annotation<string[], string[]>({
         reducer: (state, update) => [...(state ?? []), ...(update ?? [])],
         default: () => [],
-    }),
-
-    // Performance monitor para rastrear métricas de execução
-    performanceMonitor: Annotation<PerformanceMonitor>({
-        reducer: (_state, update) => update ?? new PerformanceMonitor(),
-        default: () => new PerformanceMonitor(),
     }),
 });

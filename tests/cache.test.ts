@@ -1,7 +1,7 @@
 // tests/cache.test.ts
-import { Cache } from '../src/utils/cache.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { Cache } from '../src/utils/cache.js';
 
 describe('Cache', () => {
     let cache: Cache;

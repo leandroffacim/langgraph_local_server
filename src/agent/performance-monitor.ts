@@ -40,7 +40,7 @@ export class PerformanceMonitor {
      * @param toolCalls Number of tool calls made during execution
      * @param errors Optional array of error messages
      */
-    endTask(taskId: string, success: boolean, toolCalls: number = 0, errors?: string[]): void {
+    endTask(taskId: string, success: boolean, toolCalls = 0, errors?: string[]): void {
         const metrics = this.metrics.get(taskId);
         if (!metrics) {
             throw new Error(`Task ${taskId} was not started`);

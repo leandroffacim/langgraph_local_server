@@ -12,6 +12,7 @@ import { createAgent } from "langchain";
 import { z } from "zod";
 import { listFilesTool, readFileTool, writeFileTool } from "../tools/filesystem.js";
 import { StateAnnotation, Task } from "./state.js";
+import { PerformanceMonitor } from "./performance-monitor.js";
 
 const devTools = [writeFileTool, readFileTool, listFilesTool];
 const supervisorLlm = new ChatOllama({ model: "qwen2.5-coder", temperature: 0, maxRetries: 2 });
@@ -175,7 +176,7 @@ const supervisor = async (state: typeof StateAnnotation.State, _config: Runnable
 };
 
 const devAgent = async (state: typeof StateAnnotation.State, config: RunnableConfig): Promise<Partial<typeof StateAnnotation.State>> => {
-    const { tasks, currentTaskIndex } = state;
+    const { tasks, currentTaskIndex, performanceMonitor } = state;
     const currentTask = tasks[currentTaskIndex];
 
     if (!currentTask) {
@@ -184,6 +185,9 @@ const devAgent = async (state: typeof StateAnnotation.State, config: RunnableCon
     }
 
     console.log(`\n[devAgent] Executando task ${currentTaskIndex + 1}/${tasks.length}: ${currentTask.title}`);
+
+    // Start performance monitoring
+    performanceMonitor.startTask(currentTask.id);
 
     try {
         const humanMessages = state.messages.filter((m: BaseMessage) => HumanMessage.isInstance(m));
@@ -214,7 +218,13 @@ const devAgent = async (state: typeof StateAnnotation.State, config: RunnableCon
             })
             .filter(Boolean) as string[];
 
+        // Count tool calls (ToolMessage instances)
+        const toolCalls = result.messages.filter((m: BaseMessage) => ToolMessage.isInstance(m)).length;
+
         console.log(`[devAgent] Task "${currentTask.title}" concluída. Arquivos: ${filesWritten.join(", ")}`);
+
+        // End performance monitoring with success
+        performanceMonitor.endTask(currentTask.id, true, toolCalls);
 
         // Marca task atual como done e avança o índice
         const updatedTasks = tasks.map((t, i) =>
@@ -226,10 +236,16 @@ const devAgent = async (state: typeof StateAnnotation.State, config: RunnableCon
             filesWritten,
             tasks: updatedTasks,
             currentTaskIndex: currentTaskIndex + 1,
+            performanceMonitor,
             next: "reviewAgent", // futuro: rota para QA ou Reviewer dependendo da task
         };
     } catch (error) {
         console.error(`[devAgent] Erro na task "${currentTask.title}":`, error);
+
+        // End performance monitoring with failure
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        performanceMonitor.endTask(currentTask.id, false, 0, [errorMessage]);
+
         throw error;
     }
 };

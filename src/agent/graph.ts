@@ -12,6 +12,7 @@ import { createAgent } from "langchain";
 import { z } from "zod";
 import { listFilesTool, readFileTool, writeFileTool } from "../tools/filesystem.js";
 import { StateAnnotation, Task } from "./state.js";
+import { PerformanceMonitor } from "./performance-monitor.js";
 
 const devTools = [writeFileTool, readFileTool, listFilesTool];
 const supervisorLlm = new ChatOllama({ model: "qwen2.5-coder", temperature: 0, maxRetries: 2 });
